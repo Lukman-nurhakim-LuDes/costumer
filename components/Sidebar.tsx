@@ -1,4 +1,5 @@
 // components/Sidebar.tsx
+'use client'
 import { useState } from 'react';
 import { LayoutDashboard, Calendar, Users, FileText, DollarSign, Clock, Menu } from 'lucide-react';
 
