@@ -1,0 +1,121 @@
+// File: prisma/schema.prisma
+
+// --- Pengaturan Database dan Generator ---
+datasource db {
+  provider = "postgresql"
+  // URL ini diambil dari file .env.local Anda
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ----------------------------------------------------------------
+// 1. MODEL USER (MANAJEMEN PROFIL BISNIS - Fitur 5)
+// Menyimpan informasi akun dan detail bisnis pengguna
+model User {
+  id                  String    @id @default(uuid()) // ID dari Supabase Auth
+  email               String    @unique
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  // Detail Bisnis (untuk halaman Profile)
+  studioName          String?   
+  businessPhone       String?
+  bankAccountNumber   String?
+
+  // Hubungan ke data pengguna lainnya
+  clients             Client[]
+  bookings            Booking[]
+  payments            Payment[]
+  services            Service[]
+}
+
+// ----------------------------------------------------------------
+// 2. MODEL SERVICE (LAYANAN - Untuk pengkategorian)
+// Daftar layanan fotografi yang ditawarkan pengguna
+model Service {
+  id                  String    @id @default(uuid())
+  createdAt           DateTime  @default(now())
+  
+  name                String    @unique(map: "unique_service_name") // Nama Layanan: "Wedding", "Corporate", dll.
+  description         String?
+  basePrice           Float     // Harga dasar layanan
+  
+  // Isolasi Data: Layanan ini milik User tertentu
+  userId              String
+  user                User      @relation(fields: [userId], references: [id])
+  
+  // Hubungan ke Booking
+  bookings            Booking[]
+}
+
+// ----------------------------------------------------------------
+// 3. MODEL CLIENT (MANAJEMEN KLIEN - Fitur 1)
+model Client {
+  id                  String    @id @default(uuid())
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  name                String
+  email               String    @unique(map: "unique_client_email")
+  phone               String?
+  notes               String?
+
+  // Isolasi Data: Klien ini milik User tertentu
+  userId              String
+  user                User      @relation(fields: [userId], references: [id])
+
+  // Hubungan ke Booking
+  bookings            Booking[]
+}
+
+// ----------------------------------------------------------------
+// 4. MODEL BOOKING (MANAJEMEN PROYEK/JADWAL - Fitur 2 & 4)
+model Booking {
+  id                  String    @id @default(uuid())
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  title               String      // Judul sesi foto (misalnya: "Pre-wedding Siska & Dani")
+  date                DateTime    // Tanggal sesi foto (untuk Kalender)
+  location            String
+  price               Float       // Harga total proyek
+  status              String      @default("Scheduled") // Scheduled, Completed, Canceled
+  
+  // Hubungan ke Service
+  serviceId           String
+  service             Service   @relation(fields: [serviceId], references: [id])
+  
+  // Hubungan ke Client
+  clientId            String
+  client              Client    @relation(fields: [clientId], references: [id])
+
+  // Isolasi Data: Booking ini milik User tertentu
+  userId              String
+  user                User      @relation(fields: [userId], references: [id])
+
+  // Hubungan ke Pembayaran (Payment)
+  payments            Payment[]
+}
+
+// ----------------------------------------------------------------
+// 5. MODEL PAYMENT (LAPORAN KEUANGAN - Fitur 3)
+model Payment {
+  id                  String    @id @default(uuid())
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  amount              Float
+  paymentDate         DateTime  @default(now())
+  paymentStatus       String    @default("DP Paid") // DP Paid, Fully Paid, Refunded
+  
+  // Hubungan ke Booking
+  bookingId           String
+  booking             Booking   @relation(fields: [bookingId], references: [id])
+  
+  // Isolasi Data: Pembayaran ini milik User tertentu
+  userId              String
+  user                User      @relation(fields: [userId], references: [id])
+}
