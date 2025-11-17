@@ -1,20 +1,18 @@
 // lib/prisma.ts
 import { PrismaClient } from '@prisma/client';
 
-// Membuat variabel global untuk mencegah inisialisasi berulang di pengembangan
-let prisma: PrismaClient;
+// PrismaClient harus diinisialisasi secara global untuk menghindari
+// banyak instance di lingkungan development Next.js (hot-reloading)
 
-// @ts-ignore
-if (process.env.NODE_ENV === 'production') {
-  prisma = new PrismaClient();
-} else {
-  // @ts-ignore
-  if (!global.prisma) {
-    // @ts-ignore
-    global.prisma = new PrismaClient();
-  }
-  // @ts-ignore
-  prisma = global.prisma;
-}
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+
+export const prisma = globalForPrisma.prisma || new PrismaClient({
+    log: ['query', 'error', 'warn'],
+});
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 export default prisma;
+
+// Catatan: Pastikan Anda telah menjalankan 'npx prisma generate' setelah
+// mengubah file schema.prisma Anda.

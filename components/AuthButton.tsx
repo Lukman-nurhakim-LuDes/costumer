@@ -1,53 +1,78 @@
 // components/AuthButton.tsx
-'use client'; // WAJIB ada di baris pertama
+'use client';
 
-import { createClientSupabaseClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
+// Menggunakan getClientSupabase() untuk mendapatkan instance Supabase
+import { getClientSupabase } from '@/lib/supabase/client'; 
 import { useState, useEffect } from 'react';
 
 export function AuthButton() {
-  const [user, setUser] = useState<any>(null);
-  const supabase = createClientSupabaseClient();
-  const router = useRouter();
-
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
+    const supabase = getClientSupabase();
+    if (!supabase) return; 
+
+    // Ambil status sesi awal
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUserEmail(session.user.email || 'User');
+      }
     });
-  }, [supabase.auth]);
+
+    // Dengarkan perubahan status otentikasi secara real-time
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session?.user) {
+          setUserEmail(session.user.email || 'User');
+        } else {
+          setUserEmail(null);
+        }
+        // Gunakan refresh murni JS karena router.refresh() gagal sebelumnya
+        window.location.reload();
+      }
+    );
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, []); 
 
   const handleSignIn = async () => {
-    // Aksi untuk login (contoh: Google Auth)
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`, // Sesuaikan ini nanti
-      },
-    });
+    // Pengalihan menggunakan JavaScript murni
+    window.location.href = '/login'; 
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.refresh(); // Muat ulang sesi
+    const supabase = getClientSupabase();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    // Pengalihan menggunakan JavaScript murni
+    window.location.href = '/'; 
   };
 
   return (
-    <>
-      {user ? (
-        <button
-          onClick={handleSignOut}
-          className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded"
-        >
-          Logout
-        </button>
+    <div className="flex items-center space-x-2">
+      {userEmail ? (
+        <>
+          <span className="text-sm text-gray-700 hidden sm:inline">
+            {userEmail.split('@')[0]}
+          </span>
+          <button
+            onClick={handleSignOut}
+            className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-xl transition duration-200 shadow-md"
+          >
+            Logout
+          </button>
+        </>
       ) : (
         <button
           onClick={handleSignIn}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-xl transition duration-200 shadow-lg"
         >
           Login/Daftar
         </button>
       )}
-    </>
+    </div>
   );
 }
