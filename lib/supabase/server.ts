@@ -1,29 +1,31 @@
-// lib/supabase/server.ts
+// lib/supabase/server.ts (Implementasi yang dimodifikasi)
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { cookies } from 'next/headers'; // Tetap impor ini
 
 export function createServerSupabaseClient() {
-  const cookieStore = cookies();
-
+  // ❌ Hapus: const cookieStore = cookies();
+  
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         get(name: string) {
-          return cookieStore.get(name)?.value;
+          // 🟢 Gunakan cookies() secara langsung di sini
+          return cookies().get(name)?.value; 
         },
-        // Metode set/remove diperlukan untuk Server Action, tapi diabaikan di Server Component
         set(name: string, value: string, options: CookieOptions) {
           try {
-            cookieStore.set({ name, value, ...options });
+            // 🟢 Gunakan cookies().set secara langsung
+            cookies().set({ name, value, ...options }); 
           } catch (error) {
-            // Error ini diabaikan karena terjadi saat mencoba set cookie di Server Component
+            // Error ini diabaikan
           }
         },
         remove(name: string, options: CookieOptions) {
           try {
-            cookieStore.set({ name, value: '', ...options });
+            // 🟢 Gunakan cookies().set secara langsung untuk menghapus
+            cookies().set({ name, value: '', ...options }); 
           } catch (error) {
             // Error ini diabaikan
           }
