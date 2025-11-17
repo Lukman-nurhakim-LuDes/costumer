@@ -1,7 +1,7 @@
-// components/Header.tsx
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { AuthButton } from './AuthButton'; // Ini akan kita buat selanjutnya
+import { AuthButton } from './AuthButton'; 
 
+// Fungsi Server Component
 export default async function Header() {
   // MENGAMBIL DATA DI SISI SERVER (Server Component)
   const supabase = createServerSupabaseClient();
