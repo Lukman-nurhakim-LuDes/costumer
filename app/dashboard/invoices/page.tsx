@@ -30,10 +30,11 @@ export default async function InvoicesPage() {
   });
   
   // Mendefinisikan tipe data Payment secara eksplisit dari hasil query
-  type PaymentItem = typeof bookingsWithPayments[0]['payments'][0];
+  type BookingWithPayments = typeof bookingsWithPayments[0];
+  type PaymentItem = BookingWithPayments['payments'][0];
 
   // Fungsi utilitas untuk menghitung total dibayar
-  const calculateTotals = (booking: typeof bookingsWithPayments[0]) => {
+  const calculateTotals = (booking: BookingWithPayments) => {
     // FIX: Tentukan tipe 'sum' sebagai number dan 'p' sebagai PaymentItem
     const totalPaid = booking.payments.reduce((sum: number, p: PaymentItem) => sum + p.amount, 0); 
     const remainingDue = booking.price - totalPaid;
@@ -52,7 +53,8 @@ export default async function InvoicesPage() {
           </p>
       ) : (
           <div className="space-y-6">
-              {bookingsWithPayments.map((booking) => {
+              {/* FIX di SINI: Menambahkan tipe eksplisit ke parameter 'booking' di fungsi map */}
+              {bookingsWithPayments.map((booking: BookingWithPayments) => {
                   const { totalPaid, remainingDue } = calculateTotals(booking);
                   const isFullyPaid = remainingDue <= 0;
                   
