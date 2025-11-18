@@ -1,9 +1,10 @@
 // actions/client.ts
-'use server'; // WAJIB ada di baris pertama untuk menandai ini adalah Server Action
+'use server';
 
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'; // <-- IMPORT BARU
 
 // Interface untuk tipe data yang diharapkan
 interface ClientFormData {
@@ -40,16 +41,20 @@ export async function createClient(formData: ClientFormData) {
     });
 
     // 4. Perbarui Cache Halaman
-    // Ini memastikan daftar klien diperbarui setelah penambahan
     revalidatePath('/dashboard/clients'); 
     
     return { success: true, message: 'Klien berhasil ditambahkan!' };
     
   } catch (error) {
+    // 5. Perbaikan Type Error: Melakukan Type Narrowing
     console.error('SERVER ACTION ERROR:', error);
-    if (error.code === 'P2002') { // Kode unik Prisma untuk duplikasi
-        return { success: false, message: 'Email klien sudah terdaftar.' };
+    
+    if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') { // Kode unik Prisma untuk duplikasi
+            return { success: false, message: 'Email klien sudah terdaftar.' };
+        }
     }
+    
     return { success: false, message: 'Gagal menambahkan klien karena kesalahan server.' };
   }
 }
