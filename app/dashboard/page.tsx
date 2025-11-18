@@ -1,6 +1,7 @@
 import { Activity, Clock, UserCheck, DollarSign } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import AddServicesUrl from '@/components/AddServicesUrl';
 import prisma from '@/lib/prisma';
 import { redirect } from 'next/navigation'; // <-- Import fungsi redirect
 
