@@ -1,12 +1,8 @@
+# netlify.toml
 [build]
-  # Perintah ini memastikan instalasi paksa, generate Prisma Client, dan build Next.js.
-  command = "npm install --force && npx prisma generate && npm run build"
+  command = "npm run build"
   publish = ".next"
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
-
-[build.environment]
-  # Menghapus error kompilasi ESLint yang disebabkan oleh konflik dependency.
-  DISABLE_ESLINT_PLUGIN = "true"
-  ESLINT_NO_DEV_ERRORS = "true"
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["node_modules/.prisma/**"]
