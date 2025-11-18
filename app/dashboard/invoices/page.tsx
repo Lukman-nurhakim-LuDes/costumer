@@ -17,23 +17,27 @@ export default async function InvoicesPage() {
 
   // Ambil semua Booking beserta pembayaran dan klien terkait
   const bookingsWithPayments = await prisma.booking.findMany({
-      where: { userId: userId },
-      select: { 
-          id: true, 
-          title: true, 
-          price: true, 
-          status: true,
-          client: { select: { name: true, email: true } },
-          payments: { select: { amount: true, paymentDate: true, paymentStatus: true } }
-      },
-      orderBy: { date: 'desc' }
-  });
+      where: { userId: userId },
+      select: { 
+          id: true, 
+          title: true, 
+          price: true, 
+          status: true,
+          client: { select: { name: true, email: true } },
+          payments: { select: { amount: true, paymentDate: true, paymentStatus: true } }
+      },
+      orderBy: { date: 'desc' }
+  });
+  
+  // Mendefinisikan tipe data Payment secara eksplisit dari hasil query
+  type PaymentItem = typeof bookingsWithPayments[0]['payments'][0];
 
   // Fungsi utilitas untuk menghitung total dibayar
   const calculateTotals = (booking: typeof bookingsWithPayments[0]) => {
-      const totalPaid = booking.payments.reduce((sum, p) => sum + p.amount, 0);
-      const remainingDue = booking.price - totalPaid;
-      return { totalPaid, remainingDue };
+    // FIX: Tentukan tipe 'sum' sebagai number dan 'p' sebagai PaymentItem
+    const totalPaid = booking.payments.reduce((sum: number, p: PaymentItem) => sum + p.amount, 0); 
+    const remainingDue = booking.price - totalPaid;
+    return { totalPaid, remainingDue };
   };
 
   return (
@@ -87,7 +91,6 @@ export default async function InvoicesPage() {
 
                               {/* Kolom Formulir Catat Pembayaran */}
                               <div className="border-l pl-4">
-                                  {/* PENGGANTIAN PLACEHOLDER */}
                                   <PaymentForm bookingId={booking.id} remainingDue={remainingDue} /> 
                               </div>
                           </div>
