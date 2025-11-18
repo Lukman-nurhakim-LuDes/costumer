@@ -3,28 +3,25 @@
 import { useState } from 'react';
 import { Mail, Lock, LogIn } from 'lucide-react';
 
-// Variabel Supabase Client global (digunakan untuk fallback)
-let client; 
 
-/**
- * Fungsi inisialisasi Supabase Client sisi klien.
- * Menggunakan require untuk bypass error 'Could not resolve @supabase/supabase-js' 
- * yang terjadi berulang kali di lingkungan Anda.
- */
-function initializeSupabaseClient() {
+const { createClient } = require('@supabase/supabase-js');
+
+
+
+let client: any = null; 
+
+
+function initializeSupabaseClient(): any | null {
     if (typeof window !== 'undefined' && !client) {
         // Ambil environment variables
         const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
         
-        // Menggunakan require untuk mengambil createClient (solusi untuk bundler error)
-        // NOTE: Anda HARUS menjalankan `npm install --force` agar paket ini tersedia.
         try {
-            const { createClient } = require('@supabase/supabase-js');
-            client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            // Kita sudah menggunakan require di atas, jadi tidak perlu require lagi di sini.
+            client = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!);
         } catch (e) {
             console.error("Supabase client initialization failed:", e);
-            // Handle error jika paket benar-benar hilang
             return null;
         }
     }
@@ -36,9 +33,9 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(null);
+  const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
-  const handleAuth = async (event) => {
+  const handleAuth = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
     setMessage(null);
