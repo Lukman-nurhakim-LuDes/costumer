@@ -1,5 +1,10 @@
 // app/auth/callback/route.ts
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+
+// --- PERBAIKAN PATH IMPOR ADA DI SINI ---
+// Menggunakan path relatif untuk keluar dari folder 'app'
+import { createServerSupabaseClient } from '../../../lib/supabase/server';
+// ----------------------------------------
+
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
@@ -21,6 +26,7 @@ export async function GET(request: Request) {
 
     if (!error) {
       // Jika berhasil, arahkan pengguna ke dashboard utama
+      // Pastikan 'origin' Anda adalah URL Netlify
       return NextResponse.redirect(`${origin}/dashboard`);
     }
   }
