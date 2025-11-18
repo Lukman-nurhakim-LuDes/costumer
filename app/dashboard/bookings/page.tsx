@@ -1,4 +1,5 @@
 // app/dashboard/bookings/page.tsx
+export const dynamic = 'force-dynamic';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import prisma from '@/lib/prisma';
 import AddBookingForm from '@/components/AddBookingForm';

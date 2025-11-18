@@ -1,4 +1,5 @@
-// app/dashboard/clients/page.tsx
+// app/dashboard/clients/page.
+export const dynamic = 'force-dynamic';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import prisma from '@/lib/prisma';
 import AddClientForm from '@/components/AddClientForm'; // Komponen Form (1/3 Kolom)
