@@ -81,7 +81,8 @@ export default async function InvoicesPage() {
                                       <p className="text-xs text-gray-400">Belum ada pembayaran dicatat.</p>
                                   ) : (
                                       <ul className="text-sm space-y-1">
-                                          {booking.payments.map((p, index) => (
+                                          {/* FIX di SINI: Menambahkan tipe 'index' sebagai number */}
+                                          {booking.payments.map((p: PaymentItem, index: number) => ( 
                                               <li key={index} className="flex justify-between border-b border-dotted pb-1">
                                                   <span>Rp{p.amount.toLocaleString('id-ID')}</span>
                                                   <span className={`text-xs ${p.paymentStatus === 'Fully Paid' ? 'text-green-600' : 'text-indigo-600'}`}>{p.paymentStatus}</span>

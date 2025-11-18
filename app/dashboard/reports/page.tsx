@@ -2,7 +2,14 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import prisma from '@/lib/prisma';
 import { BarChart, TrendingUp, DollarSign } from 'lucide-react';
-import RevenueChart from '@/components/RevenueChart'; // Akan dibuat
+import RevenueChart from '@/components/RevenueChart'; 
+
+// Mendefinisikan tipe data untuk hasil query payments
+interface PaymentData {
+    amount: number;
+    paymentDate: Date;
+    // Tambahkan properti lain yang Anda select jika ada
+}
 
 export default async function ReportsPage() {
   const supabase = createServerSupabaseClient();
@@ -16,22 +23,24 @@ export default async function ReportsPage() {
 
   // 1. Ambil data Pembayaran dan Booking
   const [payments, bookings] = await Promise.all([
+    // Type assertion untuk hasil pembayaran
     prisma.payment.findMany({
       where: { userId: userId, paymentStatus: 'Fully Paid' },
       select: { amount: true, paymentDate: true },
       orderBy: { paymentDate: 'asc' },
-    }),
+    }) as Promise<PaymentData[]>, 
+    
     prisma.booking.findMany({
       where: { userId: userId },
-      select: { date: true },
-      orderBy: { date: 'asc' },
+      select: { price: true },
     }),
   ]);
 
-  // 2. Proses Data untuk Grafik (Contoh Sederhana: Agregasi Bulanan)
+  // 2. Proses Data untuk Grafik (Agregasi Bulanan)
   const monthlyRevenueMap = new Map<string, number>();
   
-  payments.forEach(p => {
+  // FIX: Menambahkan tipe eksplisit ke parameter 'p'
+  payments.forEach((p: PaymentData) => { 
     const monthYear = p.paymentDate.toISOString().substring(0, 7); // Format YYYY-MM
     const currentRevenue = monthlyRevenueMap.get(monthYear) || 0;
     monthlyRevenueMap.set(monthYear, currentRevenue + p.amount);
@@ -41,7 +50,12 @@ export default async function ReportsPage() {
     name: month,
     Pendapatan: revenue,
   }));
-  // ------------------------------------------------------------------------
+  
+  // 3. Hitung Metrik Kunci
+  const totalRevenueAllTime = payments.reduce((sum, p) => sum + p.amount, 0); // Di sini, sum sudah diturunkan dari Map<string, number>
+  const totalBookingsCount = bookings.length;
+  const averageBookingValue = totalBookingsCount > 0 ? totalRevenueAllTime / totalBookingsCount : 0;
+
 
   return (
     <div className="p-4">
@@ -53,22 +67,25 @@ export default async function ReportsPage() {
         
         {/* Laporan Pendapatan (2/3 Kolom) */}
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg">
-          <h2 className="text-xl font-semibold mb-4 flex items-center"><DollarSign className="w-5 h-5 mr-2" />Pendapatan Bulanan (6 Bulan Terakhir)</h2>
+          <h2 className="text-xl font-semibold mb-4 flex items-center"><DollarSign className="w-5 h-5 mr-2" />Pendapatan Bulanan</h2>
           
           {revenueData.length > 0 ? (
-            <RevenueChart data={revenueData} /> // Komponen Grafik
+            <RevenueChart data={revenueData} /> 
           ) : (
-            <p className="text-center text-gray-500 py-10">Belum ada data pembayaran lunas untuk ditampilkan.</p>
+            <p className="text-center text-gray-500 py-10">Belum ada data pendapatan untuk ditampilkan di grafik.</p>
           )}
         </div>
         
         {/* Metrik Kunci (1/3 Kolom) */}
         <div className="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg">
           <h2 className="text-xl font-semibold mb-4 flex items-center"><BarChart className="w-5 h-5 mr-2" />Metrik Kunci</h2>
-          <p>Total Pemesanan: {bookings.length}</p>
-          <p>Rata-rata Nilai Pemesanan: Rp...</p>
+          <div className="space-y-3">
+              <p className="font-medium">Total Pemesanan: <span className="text-lg text-indigo-600">{totalBookingsCount}</span></p>
+              <p className="font-medium">Total Pendapatan (Semua): <span className="text-lg text-green-600">Rp{totalRevenueAllTime.toLocaleString('id-ID')}</span></p>
+              <p className="font-medium">Rata-rata Nilai Pemesanan: <span className="text-lg text-blue-600">Rp{averageBookingValue.toLocaleString('id-ID')}</span></p>
+          </div>
           <p className="mt-4 text-sm text-gray-500">
-            *Membutuhkan implementasi lebih lanjut untuk menghitung rata-rata dan metrik lain.
+            *Data diambil dari pembayaran yang berstatus LUNAS.
           </p>
         </div>
       </div>

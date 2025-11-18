@@ -3,6 +3,15 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import prisma from '@/lib/prisma';
 import AddServiceForm from '@/components/AddServiceForm';
 
+// Mendefinisikan tipe data untuk hasil query services
+interface ServiceItem {
+    id: string;
+    name: string;
+    basePrice: number;
+    description: string | null;
+}
+
+
 export default async function ServicesPage() {
   const supabase = createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -16,8 +25,9 @@ export default async function ServicesPage() {
   // Ambil semua layanan milik pengguna ini
   const services = await prisma.service.findMany({
     where: { userId: userId },
+    select: { id: true, name: true, basePrice: true, description: true }, // Tambahkan select yang diperlukan
     orderBy: { name: 'asc' },
-  });
+  }) as ServiceItem[]; // <-- Type Assertion
 
   return (
     <div className="p-4">
@@ -41,7 +51,8 @@ export default async function ServicesPage() {
             </p>
           ) : (
             <ul className="divide-y divide-gray-100">
-                {services.map((service) => (
+                {/* FIX di SINI: Menambahkan tipe 'service' sebagai ServiceItem */}
+                {services.map((service: ServiceItem) => ( 
                     <li key={service.id} className="flex justify-between items-center py-4">
                         <div>
                             <p className="font-semibold text-gray-800">{service.name}</p>
