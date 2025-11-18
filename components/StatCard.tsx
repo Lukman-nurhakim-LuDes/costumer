@@ -1,11 +1,12 @@
-// components/StatCard.tsx
-import { Icon } from 'lucide-react';
+import { Activity, Icon } from 'lucide-react'; // Import Icon dan Activity (untuk contoh)
+import React from 'react'; // 🛑 PERBAIKAN: Import React
 
 interface StatCardProps {
   title: string;
   value: string;
   change: string;
-  icon: Icon; // Menggunakan Icon type dari lucide-react
+  // 🛑 PERBAIKAN: Gunakan React.ElementType atau React.ComponentType untuk menerima komponen secara generik
+  icon: React.ElementType; 
   color: 'blue' | 'yellow' | 'green' | 'red';
 }
 
@@ -17,7 +18,8 @@ const colorMap = {
   red: { bg: 'bg-red-100/50', text: 'text-red-600' },
 };
 
-export default function StatCard({ title, value, change, icon: Icon, color }: StatCardProps) {
+// Kita menggunakan alias 'IconComponent' untuk komponen yang diterima melalui props
+export default function StatCard({ title, value, change, icon: IconComponent, color }: StatCardProps) {
   const colors = colorMap[color] || colorMap.blue; // Default ke biru
 
   return (
@@ -25,7 +27,8 @@ export default function StatCard({ title, value, change, icon: Icon, color }: St
       <div className="flex justify-between items-start">
         {/* Ikon */}
         <div className={`p-3 rounded-xl ${colors.bg} ${colors.text}`}>
-          <Icon className="w-6 h-6" />
+          {/* Render komponen yang diterima melalui prop */}
+          <IconComponent className="w-6 h-6" /> 
         </div>
         
         {/* Nilai Utama */}
