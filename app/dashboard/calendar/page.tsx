@@ -2,13 +2,27 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import prisma from '@/lib/prisma';
 import BookingCalendar from '@/components/BookingCalendar';
+import { Package } from 'lucide-react'; 
 
-// Tipe data untuk event kalender
+// Tipe data untuk event kalender (untuk BookingCalendar.tsx)
 interface BookingEvent {
     id: string;
     title: string;
     start: Date;
     end: Date;
+    allDay?: boolean;
+    resource?: any;
+}
+
+// PERBAIKAN: Tipe data untuk hasil query Prisma (rawBookings)
+// Harus mencerminkan HASIL data, BUKAN struktur query 'select'.
+interface RawBookingData {
+    id: string;
+    title: string;
+    date: Date; 
+    status: string;
+    // FIX: client sekarang adalah objek yang berisi properti 'name', bukan objek 'select'
+    client: { name: string }; 
 }
 
 export default async function CalendarPage() {
@@ -27,31 +41,28 @@ export default async function CalendarPage() {
       select: { 
           id: true, 
           title: true, 
-          date: true, // Tanggal sesi
-          client: { select: { name: true } },
+          date: true, 
           status: true,
+          client: { select: { name: true } }, // Struktur query yang benar
       },
-  });
+  }) as unknown as RawBookingData[]; // Type Assertion
 
   // 2. Transformasi data ke format yang dibutuhkan Kalender
-  const calendarEvents: BookingEvent[] = rawBookings.map(booking => {
-      // Asumsi: Semua pemesanan saat ini adalah acara sehari penuh (All Day) 
-      // karena Anda hanya menyimpan kolom 'date' tanpa waktu.
-      // Untuk event yang memiliki waktu (misal 09:00 - 11:00), kolom 'date' harus diubah menjadi 'start_datetime'
+  const calendarEvents: BookingEvent[] = rawBookings.map((booking: RawBookingData) => { 
       
       const sessionDate = new Date(booking.date);
       
-      // Karena kita hanya punya tanggal, kita anggap event dimulai pada jam 00:00 dan berakhir di 23:59
       const startOfDay = new Date(sessionDate.setHours(0, 0, 0, 0));
       const endOfDay = new Date(sessionDate.setHours(23, 59, 59, 999));
 
       return {
           id: booking.id,
-          title: `[${booking.status}] ${booking.title} (${booking.client.name})`,
+          // FIX: Akses booking.client.name sekarang benar karena tipe datanya sudah diperbaiki
+          title: `[${booking.status}] ${booking.title} (${booking.client.name})`, 
           start: startOfDay,
           end: endOfDay,
           allDay: true,
-          resource: { status: booking.status } // Data tambahan jika diperlukan
+          resource: { status: booking.status }
       };
   });
 
@@ -64,7 +75,7 @@ export default async function CalendarPage() {
 
       <div className="mt-6 p-4 bg-white rounded-xl shadow">
         <h2 className="text-xl font-semibold">Catatan Penting:</h2>
-        <p className="text-gray-600">Kalender saat ini menampilkan acara sebagai 'All Day' karena skema database hanya memiliki kolom `Date`. Untuk waktu yang lebih spesifik, skema `Booking` perlu diubah menjadi `start_datetime` dan `end_datetime`.</p>
+        <p className="text-gray-600">Kalender saat ini menampilkan acara sebagai 'All Day' karena skema database hanya memiliki kolom `Date`.</p>
       </div>
     </div>
   );
