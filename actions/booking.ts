@@ -4,14 +4,15 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'; 
 
 interface BookingFormData {
-  clientId: string; // ID Klien yang dipilih
-  serviceId: string; // ID Layanan yang dipilih
+  clientId: string; 
+  serviceId: string; 
   title: string;
-  date: string; // Tanggal sesi
+  date: string; 
   location: string;
-  price: string; // Harga final
+  price: string; 
 }
 
 export async function createBooking(formData: BookingFormData) {
@@ -34,17 +35,16 @@ export async function createBooking(formData: BookingFormData) {
         return { success: false, message: 'Harga final harus berupa angka yang valid.' };
     }
     
-    // Simpan Data ke Database
     await prisma.booking.create({
       data: {
         title: formData.title,
-        date: new Date(formData.date), // Konversi string tanggal ke objek Date
+        date: new Date(formData.date), 
         location: formData.location,
         price: finalPrice,
         clientId: formData.clientId,
         serviceId: formData.serviceId,
-        userId: userId, // Kunci RLS
-        status: 'Scheduled', // Status default
+        userId: userId, 
+        status: 'Scheduled', 
       },
     });
 
@@ -54,6 +54,14 @@ export async function createBooking(formData: BookingFormData) {
     
   } catch (error) {
     console.error('SERVER ACTION ERROR:', error);
+    
+    // Type Narrowing Fix
+    if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') { 
+            return { success: false, message: 'Judul pemesanan sudah digunakan.' };
+        }
+    }
+    
     return { success: false, message: 'Gagal membuat pemesanan. Cek koneksi atau input Anda.' };
   }
 }

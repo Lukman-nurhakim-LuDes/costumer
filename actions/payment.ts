@@ -4,10 +4,11 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'; 
 
 interface PaymentFormData {
   bookingId: string;
-  amount: string; // Ambil sebagai string, konversi ke Float
+  amount: string; 
   paymentStatus: 'DP Paid' | 'Fully Paid';
 }
 
@@ -28,30 +29,35 @@ export async function createPayment(formData: PaymentFormData) {
         return { success: false, message: 'Jumlah pembayaran tidak valid.' };
     }
     
-    // Simpan Data Pembayaran ke Database
     await prisma.payment.create({
       data: {
         amount: amount,
         paymentStatus: formData.paymentStatus,
         bookingId: formData.bookingId,
-        userId: userId, // Kunci RLS
+        userId: userId, 
       },
     });
 
-    // Opsional: Perbarui status Booking jika pembayaran LUNAS
     if (formData.paymentStatus === 'Fully Paid') {
         await prisma.booking.update({
             where: { id: formData.bookingId },
-            data: { status: 'Completed' } // Asumsi: Jika lunas, status proyek selesai
+            data: { status: 'Completed' } 
         });
     }
 
     revalidatePath('/dashboard/invoices'); 
+    revalidatePath('/dashboard'); // Perlu diperbarui untuk Stat Cards
     
     return { success: true, message: `Pembayaran berhasil dicatat!` };
     
   } catch (error) {
     console.error('SERVER ACTION ERROR:', error);
+    
+    // Type Narrowing Fix
+    if (error instanceof PrismaClientKnownRequestError) {
+        // Biasanya tidak ada P2002 di payment, tapi kita pertahankan type safety
+    }
+
     return { success: false, message: 'Gagal mencatat pembayaran karena kesalahan server.' };
   }
 }
