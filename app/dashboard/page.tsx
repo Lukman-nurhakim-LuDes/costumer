@@ -1,4 +1,7 @@
 // app/dashboard/page.tsx
+export const dynamic = 'force-dynamic'; // <-- TAMBAHKAN BARIS INI
+
+
 import { Activity, Clock, UserCheck, DollarSign } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
