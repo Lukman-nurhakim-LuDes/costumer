@@ -22,14 +22,11 @@
         "name": "next"
       }
     ],
-    // --- INI PERBAIKANNYA ---
-    "baseUrl": ".",
     "paths": {
       "@/*": [
-        "app/*"
+        "./*"
       ]
     }
-    // ------------------------
   },
   "include": [
     "next-env.d.ts",
