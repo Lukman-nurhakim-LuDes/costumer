@@ -1,6 +1,6 @@
 {
-  "name": "Photography CRM Dashboard",
-  "short_name": "PhotoCRM",
+  "name": "Management Costumer",
+  "short_name": "Cortumer-Pro",
   "description": "Dashboard manajemen klien dan pemesanan untuk fotografer profesional.",
   "start_url": "/dashboard",
   "display": "standalone",
