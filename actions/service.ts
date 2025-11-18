@@ -1,17 +1,21 @@
-// actions/service.ts
+// actions/booking.ts
 'use server';
 
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'; 
 
-interface ServiceFormData {
-  name: string;
-  description: string;
-  basePrice: string; // Ambil sebagai string, konversi ke Float
+interface BookingFormData {
+  clientId: string; 
+  serviceId: string; 
+  title: string;
+  date: string; 
+  location: string;
+  price: string; 
 }
 
-export async function createService(formData: ServiceFormData) {
+export async function createBooking(formData: BookingFormData) {
   const supabase = createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -22,30 +26,42 @@ export async function createService(formData: ServiceFormData) {
   const userId = user.id;
 
   try {
-    const price = parseFloat(formData.basePrice);
+    const finalPrice = parseFloat(formData.price);
 
-    if (isNaN(price)) {
-        return { success: false, message: 'Harga Dasar harus berupa angka yang valid.' };
+    if (!formData.clientId || !formData.serviceId || !formData.date) {
+        return { success: false, message: 'Klien, Layanan, dan Tanggal wajib diisi.' };
     }
-
-    await prisma.service.create({
+    if (isNaN(finalPrice)) {
+        return { success: false, message: 'Harga final harus berupa angka yang valid.' };
+    }
+    
+    await prisma.booking.create({
       data: {
-        name: formData.name,
-        description: formData.description || null,
-        basePrice: price,
-        userId: userId, // KUNCI RLS: Isolasi data
+        title: formData.title,
+        date: new Date(formData.date), 
+        location: formData.location,
+        price: finalPrice,
+        clientId: formData.clientId,
+        serviceId: formData.serviceId,
+        userId: userId, 
+        status: 'Scheduled', 
       },
     });
 
-    revalidatePath('/dashboard/services'); 
+    revalidatePath('/dashboard/bookings'); 
     
-    return { success: true, message: `Layanan '${formData.name}' berhasil ditambahkan!` };
+    return { success: true, message: `Pemesanan "${formData.title}" berhasil dibuat!` };
     
   } catch (error) {
     console.error('SERVER ACTION ERROR:', error);
-    if (error.code === 'P2002') { 
-        return { success: false, message: 'Nama layanan ini sudah ada.' };
+    
+    // Type Narrowing Fix
+    if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') { 
+            return { success: false, message: 'Judul pemesanan sudah digunakan.' };
+        }
     }
-    return { success: false, message: 'Gagal menambahkan layanan karena kesalahan server.' };
+    
+    return { success: false, message: 'Gagal membuat pemesanan. Cek koneksi atau input Anda.' };
   }
 }

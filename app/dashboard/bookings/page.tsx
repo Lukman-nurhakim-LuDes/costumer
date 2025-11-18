@@ -1,8 +1,16 @@
+// app/dashboard/bookings/page.tsx
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import prisma from '@/lib/prisma';
 import AddBookingForm from '@/components/AddBookingForm';
 import { Package } from 'lucide-react';
-// import BookingTable from '@/components/BookingTable'; // Akan dibuat nanti
+
+// Tipe data yang diambil dari Prisma Client (Manual Definition)
+interface ClientData {
+    id: string;
+    name: string;
+    email: string;
+    // Tambahkan properti lain yang Anda select jika ada
+}
 
 export default async function BookingsPage() {
   const supabase = createServerSupabaseClient();
@@ -15,10 +23,11 @@ export default async function BookingsPage() {
   const userId = user.id;
 
   // 1. Ambil Klien dan Layanan untuk Dropdown
+  // Menggunakan as ClientData[] untuk type assertion
   const clients = await prisma.client.findMany({
     where: { userId: userId },
     select: { id: true, name: true, email: true },
-  });
+  }) as ClientData[]; // <-- Type Assertion
 
   const services = await prisma.service.findMany({
     where: { userId: userId },
@@ -34,44 +43,19 @@ export default async function BookingsPage() {
 
   return (
     <div className="p-4">
-      <h1 className="text-3xl font-extrabold text-gray-900 mb-6">Manajemen Pemesanan ({bookings.length})</h1>
-      
+      {/* ... (Kode lainnya) ... */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Formulir Pemesanan (KIRI - 1/3) */}
         <div className="lg:col-span-1">
             <AddBookingForm 
-                clients={clients.map(c => ({ id: c.id, name: `${c.name} (${c.email})` }))}
+                // PERBAIKAN: Menggunakan explicit type annotation (c: ClientData)
+                clients={clients.map((c: ClientData) => ({ id: c.id, name: `${c.name} (${c.email})` }))}
                 services={services}
             />
         </div>
 
-        {/* Tabel Pemesanan (KANAN - 2/3) */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg">
-          <h2 className="text-xl font-semibold mb-4 flex items-center"><Package className="w-5 h-5 mr-2" />Daftar Semua Pemesanan</h2>
-          
-          {bookings.length === 0 ? (
-            <p className="text-center text-gray-500 py-10">
-              Belum ada pemesanan. Buat pemesanan pertama Anda di samping.
-            </p>
-          ) : (
-            // <BookingTable data={bookings} /> // Akan diisi dengan komponen tabel
-            <ul className="divide-y divide-gray-100">
-                {bookings.map(b => (
-                    <li key={b.id} className="py-3 flex justify-between items-center">
-                        <div>
-                            <p className="font-semibold text-gray-800">{b.title}</p>
-                            <p className="text-sm text-gray-600">Klien: {b.client.name} | Layanan: {b.service.name}</p>
-                        </div>
-                        <div className="text-sm">
-                            <span className={`px-2 py-1 rounded-full text-white ${b.status === 'Scheduled' ? 'bg-indigo-500' : 'bg-green-500'}`}>{b.status}</span>
-                            <p className="text-xs text-gray-500 mt-1">{new Date(b.date).toLocaleDateString()}</p>
-                        </div>
-                    </li>
-                ))}
-            </ul>
-          )}
-        </div>
+        {/* ... (Sisa kode halaman) ... */}
       </div>
     </div>
   );
